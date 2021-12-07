@@ -12,6 +12,7 @@ const urlDatabase = {
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -32,7 +33,7 @@ app.get("/urls/new", (req, res) => {
 app.post("/urls", (req, res) => {
   console.log(req.body);  // Log the POST request body to the console
   const randomURL = generateRandomString();
-  urlDatabase[generateRandomString()] = req.body.longURL;
+  urlDatabase[randomURL] = req.body.longURL;
   console.log(urlDatabase);
   res.redirect(`/urls/${randomURL}`);
 });
@@ -46,6 +47,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  // console.log(req.params);
+  // console.log(longURL);
+  // console.log(urlDatabase);
+  res.redirect(longURL);
+});
 
 
 app.listen(PORT, () => {
