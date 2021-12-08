@@ -14,6 +14,18 @@ app.use(cookies());
 app.set("view engine", "ejs");
 
 
+
+app.get('/urls', (req, res) =>{
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  // ... any other vars
+  };
+  res.render("urlsIndex", templateVars);
+});
+
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -29,7 +41,10 @@ app.get("/hello", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urlsIndex", templateVars);
 });
 
@@ -44,13 +59,20 @@ app.post("/urls", (req, res) => { //new URL page command
 
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
 });
 
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    username: req.cookies["username"]
+  };
   res.render("urlsShow", templateVars);
 });
 
@@ -82,6 +104,11 @@ app.post('/login', (req, res) =>{
   res.redirect('/urls');
 });
 
+
+app.post('/logout', (req, res) =>{
+  res.clearCookie('username', req.body.username);
+  res.redirect('/urls');
+});
 
 
 

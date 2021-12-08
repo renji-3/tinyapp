@@ -1,9 +1,3 @@
-const templateVars = {
-  username: req.cookies["username"],
-  // ... any other vars
-};
-res.render("urlsIndex", templateVars);
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -15,10 +9,10 @@ res.render("urlsIndex", templateVars);
 
     <title>New URL - TinyApp Example</title>
   </head>
+  <%- include('partials/_header') %>
 
   <body>
 
-    <%- include('partials/_header') %>
 
     <main style="margin: 1em;">
       <h3>Create TinyURL</h3>
