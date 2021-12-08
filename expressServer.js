@@ -42,13 +42,13 @@ app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
 });
 
 
-app.post("/urls", (req, res) => { //from urls page
+app.post("/urls", (req, res) => { //changes are made on /url
   console.log(req.body); //to console
   const randomURL = generateRandomString(); //generate randomm string
   urlDatabase[randomURL] = req.body.longURL; //assign string to the requested (by client) body (of submission) longURL (assigned variable - cant think of where its assigned)
   console.log(urlDatabase); //log to console
-  res.redirect(`/urls/${randomURL}`); //redirect back to urls
-}); //this is supposed to create new shortened urls but idk why we're starting on urls and not urls/new
+  res.redirect(`/urls/${randomURL}`); //redirect back to urls/randomURL
+}); //creates new url
 
 //------------------------------------------------------------------------------------
 
@@ -70,13 +70,13 @@ app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describ
   res.render("urlsShow", templateVars); //render from urlsShow
 });
 
-app.post("/urls/:shortURL", (req, res) => { //edit existing URL
+app.post("/urls/:shortURL", (req, res) => {
   console.log(req.body);
   const shortURL = req.params.shortURL; //shortURL is the same as in the URL above
   urlDatabase[shortURL] = req.body.longURL; //change shortURL value in Database to new requested longURL(variable assigned elsewhere - not sure exactly where)
   console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`); //redirect to home
-});
+}); //edit existing URL
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
