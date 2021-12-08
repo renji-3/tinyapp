@@ -1,3 +1,9 @@
+const templateVars = {
+  username: req.cookies["username"],
+  // ... any other vars
+};
+res.render("urlsIndex", templateVars);
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
