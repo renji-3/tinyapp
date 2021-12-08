@@ -15,16 +15,6 @@ app.set("view engine", "ejs");
 
 
 
-app.get('/urls', (req, res) =>{
-  const templateVars = {
-    urls: urlDatabase,
-    username: req.cookies["username"]
-  // ... any other vars
-  };
-  res.render("urlsIndex", templateVars);
-});
-
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -38,23 +28,29 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// app.get("/urls", (req, res) => {
-//   const templateVars = {
-//     urls: urlDatabase,
-//     username: req.cookies["username"]
-//   };
-//   res.render("urlsIndex", templateVars);
-// }); - dont think this is necessary but leaving just in case
+//------------------------------------------------------------------------------------
 
-app.post("/urls", (req, res) => { //new URL page command
-  console.log(req.body);
-  const randomURL = generateRandomString();
-  urlDatabase[randomURL] = req.body.longURL;
-  console.log(urlDatabase);
-  res.redirect(`/urls/${randomURL}`);
+//get is a page loader, post is a command (rough explanation)
+
+app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
+  const templateVars = { //gives necessary values
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  // ... any other vars
+  };
+  res.render("urlsIndex", templateVars); //renders the file urlsIndex
 });
 
 
+app.post("/urls", (req, res) => { //from urls page
+  console.log(req.body); //to console
+  const randomURL = generateRandomString(); //generate randomm string
+  urlDatabase[randomURL] = req.body.longURL; //assign string to the requested (by client) body (of submission) longURL (assigned variable - cant think of where its assigned)
+  console.log(urlDatabase); //log to console
+  res.redirect(`/urls/${randomURL}`); //redirect back to urls
+}); //this is supposed to create new shortened urls but idk why we're starting on urls and not urls/new
+
+//------------------------------------------------------------------------------------
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -63,52 +59,51 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+//------------------------------------------------------------------------------------
 
-
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
+app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describer for js links
+  const templateVars = { //necessary info
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
     username: req.cookies["username"]
   };
-  res.render("urlsShow", templateVars);
+  res.render("urlsShow", templateVars); //render from urlsShow
 });
 
 app.post("/urls/:shortURL", (req, res) => { //edit existing URL
   console.log(req.body);
-  const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
+  const shortURL = req.params.shortURL; //shortURL is the same as in the URL above
+  urlDatabase[shortURL] = req.body.longURL; //change shortURL value in Database to new requested longURL(variable assigned elsewhere - not sure exactly where)
   console.log(urlDatabase);
-  res.redirect(`/urls/${shortURL}`);
+  res.redirect(`/urls/${shortURL}`); //redirect to home
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
-});
+}); //when delete is pressed, take us to the assigned URL delete page,immediately redirect to home page
 
-
+//------------------------------------------------------------------------------------
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
-});
+}); //link redirect to longURL
 
-
+//------------------------------------------------------------------------------------
 
 app.post('/login', (req, res) =>{
   res.cookie('username',req.body.username);
   res.redirect('/urls');
-});
-
+}); //log in, save cookies, redirect
 
 app.post('/logout', (req, res) =>{
   res.clearCookie('username', req.body.username);
   res.redirect('/urls');
-});
+}); //log out, delete cookies, redirect
 
-
+//------------------------------------------------------------------------------------
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
