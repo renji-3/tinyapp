@@ -9,12 +9,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const userDatabase = {
+
+};
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookies());
 app.set("view engine", "ejs");
-
- 
-
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -27,6 +28,22 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+//------------------------------------------------------------------------------------
+
+app.get('/register', (req, res) => {
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
+  res.render("accReg", templateVars);
+});
+
+app.post('/register', (req, res) => {
+  const user = req.body.username;
+  userDatabase[user] = req.body.username;
+  res.redirect("/urls");
+});
+
 
 //------------------------------------------------------------------------------------
 
@@ -36,7 +53,6 @@ app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
   const templateVars = { //gives necessary values
     urls: urlDatabase,
     username: req.cookies["username"]
-  // ... any other vars
   };
   res.render("urlsIndex", templateVars); //renders the file urlsIndex
 });
