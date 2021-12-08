@@ -38,15 +38,13 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-
-
-app.get("/urls", (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    username: req.cookies["username"]
-  };
-  res.render("urlsIndex", templateVars);
-});
+// app.get("/urls", (req, res) => {
+//   const templateVars = {
+//     urls: urlDatabase,
+//     username: req.cookies["username"]
+//   };
+//   res.render("urlsIndex", templateVars);
+// }); - dont think this is necessary but leaving just in case
 
 app.post("/urls", (req, res) => { //new URL page command
   console.log(req.body);
