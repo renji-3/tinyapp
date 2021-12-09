@@ -37,7 +37,7 @@ const getUserByEmail = function(email) {
   }
 };
 
-const getUsersURLs = function(userID) { //this is urlsForUser(id) but different function name - pretty sure it does the same thing
+const getUsersURLs = function(userID) { //this is urlsForUser(id) but different function name
   const userURLs = {};
   for (const shortURL in urlDatabase) {
     const url = urlDatabase[shortURL];
@@ -63,6 +63,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
+
 //------------------------------------------------------------------------------------
 
 app.get('/login', (req, res) => {
@@ -89,10 +90,21 @@ app.post('/login', (req, res) => {
     return;
   }
 
-
   res.cookie('user_id', user.id);
   res.redirect('/urls');
 
+});
+
+//------------------------------------------------------------------------------------
+
+app.get('/loginerr', (req, res) => {
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render('notLoggedIn', templateVars);
+});
+
+app.get('/urlerr', (req, res) => {
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render('URLNotReal', templateVars);
 });
 
 //------------------------------------------------------------------------------------
@@ -123,13 +135,10 @@ app.post('/register', (req, res) => {
 
 });
 
-
 //------------------------------------------------------------------------------------
 
-//get is a page loader, post is a command (rough explanation)
-
-app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
-  const templateVars = { //gives necessary values
+app.get('/urls', (req, res) =>{
+  const templateVars = {
     urls: getUsersURLs(req.cookies["user_id"]),
     user: users[req.cookies["user_id"]]
   };
@@ -137,10 +146,10 @@ app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
   const loggedIn = users[userID];
   
   if (!loggedIn) {
-    // res.status(401).send('please log in or create an account'); - this is what they want but i dont like it bc it makes logging in hard
-    res.redirect('/login'); //this isnt what they ask but i like it better
+    res.redirect('/loginerr');
   }
-  res.render("urlsIndex", templateVars); //renders the file urlsIndex
+  
+  res.render("urlsIndex", templateVars);
 });
 
 
@@ -161,7 +170,7 @@ app.get("/urls/new", (req, res) => {
   const loggedIn = users[userId];
 
   if (!loggedIn) {
-    res.redirect('/login');
+    res.redirect('/loginerr');
   }
   
   const templateVars = { user: users[req.cookies["user_id"]] };
@@ -170,42 +179,50 @@ app.get("/urls/new", (req, res) => {
 
 //------------------------------------------------------------------------------------
 
-app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describer for js links
-  const templateVars = { //necessary info
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies["user_id"]]
   };
-  res.render("urlsShow", templateVars); //render from urlsShow
+  const userId = req.cookies['user_id'];
+  const loggedIn = users[userId];
+
+  if (!loggedIn) {
+    res.redirect('/loginerr');
+  }
+  res.render("urlsShow", templateVars);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.cookies['user_id'];
-  const loggedIn = users[userID];
   const longURL = req.body.longURL;
-
-  if (!loggedIn) {
-    res.status(401).send('please log in or create an account');
-  }
 
   urlDatabase[shortURL] = {longURL, userID};
 
-  res.redirect(`/urls/${shortURL}`); //redirect to home
+  res.redirect(`/urls/${shortURL}`);
 }); //edit existing URL
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+  const userId = req.cookies['user_id'];
+  const loggedIn = users[userId];
+
+  if (!loggedIn) {
+     //cant make it so that delete doesnt happen when not logged in
+  }
+
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
-}); //when delete is pressed, take us to the assigned URL delete page,immediately redirect to home page
+});
 
 //------------------------------------------------------------------------------------
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   if (!longURL) {
-    return res.send('url does not exist');
+    return res.redirect('/urlerr'); // cant make it show HTML for non existent short URL
   }
   res.redirect(longURL);
 }); //link redirect to longURL
