@@ -137,12 +137,12 @@ app.get("/u/:shortURL", (req, res) => {
 //------------------------------------------------------------------------------------
 
 app.post('/login', (req, res) =>{
-  res.cookie('username',req.body.username);
+  res.cookie('user_id',req.body.user);
   res.redirect('/urls');
 }); //log in, save cookies, redirect
 
 app.post('/logout', (req, res) =>{
-  res.clearCookie('username', req.body.username);
+  res.clearCookie('user_id', req.body.user);
   res.redirect('/urls');
 }); //log out, delete cookies, redirect
 
