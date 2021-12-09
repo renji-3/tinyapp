@@ -209,7 +209,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   const loggedIn = users[userId];
 
   if (!loggedIn) {
-     //cant make it so that delete doesnt happen when not logged in
+    return res.redirect('/loginerr');
   }
 
   const shortURL = req.params.shortURL;
@@ -220,11 +220,11 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 //------------------------------------------------------------------------------------
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  if (!longURL) {
-    return res.redirect('/urlerr'); // cant make it show HTML for non existent short URL
+  const shortURL = urlDatabase[req.params.shortURL];
+  if (!shortURL) {
+    return res.redirect('/urlerr');
   }
-  res.redirect(longURL);
+  res.redirect(shortURL.longURL);
 }); //link redirect to longURL
 
 //------------------------------------------------------------------------------------
