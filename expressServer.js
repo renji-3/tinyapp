@@ -9,8 +9,26 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const userDatabase = {
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
 
+const getUserByEmail = function(email) {
+  for (let id in users) {
+    const user = users[id];
+    if (user.email === email) {
+      return user;
+    }
+  }
 };
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -31,17 +49,26 @@ app.get("/hello", (req, res) => {
 //------------------------------------------------------------------------------------
 
 app.get('/register', (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    username: req.cookies["username"]
-  };
+  const templateVars = { username: null };
   res.render("accReg", templateVars);
 });
 
 app.post('/register', (req, res) => {
-  const user = req.body.username;
-  userDatabase[user] = req.body.username;
-  res.redirect("/urls");
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  
+  if (getUserByEmail(email)) {
+    return res.status(404).send('User already exists');
+  }
+  
+  users[id] = {id, email, password}; // not sure why this has to be down here
+
+
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+
 });
 
 
