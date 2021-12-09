@@ -5,15 +5,21 @@ const cookies = require('cookie-parser');
 const bodyParser = require("body-parser");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
 
 const users = {
-  "userRandomID": {
-    id: "userRandomID",
+  "aJ48lW": {
+    id: "aJ48lW",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "asd"
   },
   "user2RandomID": {
     id: "user2RandomID",
@@ -29,6 +35,17 @@ const getUserByEmail = function(email) {
       return user;
     }
   }
+};
+
+const getUsersURLs = function(userID) { //this is urlsForUser(id) but different function name - pretty sure it does the same thing
+  const userURLs = {};
+  for (const shortURL in urlDatabase) {
+    const url = urlDatabase[shortURL];
+    if (url.userID === userID) {
+      userURLs[shortURL] = url;
+    }
+  }
+  return userURLs;
 };
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -73,7 +90,7 @@ app.post('/login', (req, res) => {
   }
 
 
-  res.cookie('user_id',req.body.user);
+  res.cookie('user_id', user.id);
   res.redirect('/urls');
 
 });
@@ -113,27 +130,41 @@ app.post('/register', (req, res) => {
 
 app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
   const templateVars = { //gives necessary values
-    urls: urlDatabase,
+    urls: getUsersURLs(req.cookies["user_id"]),
     user: users[req.cookies["user_id"]]
   };
+  const userID = req.cookies['user_id'];
+  const loggedIn = users[userID];
+  
+  if (!loggedIn) {
+    // res.status(401).send('please log in or create an account'); - this is what they want but i dont like it bc it makes logging in hard
+    res.redirect('/login'); //this isnt what they ask but i like it better
+  }
   res.render("urlsIndex", templateVars); //renders the file urlsIndex
 });
 
 
 app.post("/urls", (req, res) => { //changes are made on /url
-  console.log(req.body); //to console
-  const randomURL = generateRandomString(); //generate randomm string
-  urlDatabase[randomURL] = req.body.longURL; //assign string to the requested (by client) body (of submission) longURL (assigned variable - cant think of where its assigned)
-  console.log(urlDatabase); //log to console
-  res.redirect(`/urls/${randomURL}`); //redirect back to urls/randomURL
+  const userID = req.cookies['user_id'];
+  const longURL = req.body.longURL;
+
+
+  const randomURL = generateRandomString();
+  urlDatabase[randomURL] = {longURL, userID};
+  res.redirect(`/urls/${randomURL}`);
 }); //creates new url
 
 //------------------------------------------------------------------------------------
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
+  const userId = req.cookies['user_id'];
+  const loggedIn = users[userId];
+
+  if (!loggedIn) {
+    res.redirect('/login');
+  }
+  
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
@@ -142,17 +173,24 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describer for js links
   const templateVars = { //necessary info
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies["user_id"]]
   };
   res.render("urlsShow", templateVars); //render from urlsShow
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  console.log(req.body);
-  const shortURL = req.params.shortURL; //shortURL is the same as in the URL above
-  urlDatabase[shortURL] = req.body.longURL; //change shortURL value in Database to new requested longURL(variable assigned elsewhere - not sure exactly where)
-  console.log(urlDatabase);
+  const shortURL = req.params.shortURL;
+  const userID = req.cookies['user_id'];
+  const loggedIn = users[userID];
+  const longURL = req.body.longURL;
+
+  if (!loggedIn) {
+    res.status(401).send('please log in or create an account');
+  }
+
+  urlDatabase[shortURL] = {longURL, userID};
+
   res.redirect(`/urls/${shortURL}`); //redirect to home
 }); //edit existing URL
 
@@ -165,7 +203,10 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 //------------------------------------------------------------------------------------
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  if (!longURL) {
+    return res.send('url does not exist');
+  }
   res.redirect(longURL);
 }); //link redirect to longURL
 
