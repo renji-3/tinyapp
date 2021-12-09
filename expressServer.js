@@ -49,7 +49,7 @@ app.get("/hello", (req, res) => {
 //------------------------------------------------------------------------------------
 
 app.get('/register', (req, res) => {
-  const templateVars = { username: null };
+  const templateVars = { user: req.cookies["user_id"] };
   res.render("accReg", templateVars);
 });
 
@@ -66,7 +66,7 @@ app.post('/register', (req, res) => {
   users[id] = {id, email, password}; // not sure why this has to be down here
 
 
-  res.cookie('user_id', id);
+  res.cookie('user_id', email);
   res.redirect('/urls');
 
 });
@@ -79,7 +79,7 @@ app.post('/register', (req, res) => {
 app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
   const templateVars = { //gives necessary values
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: req.cookies["user_id"]
   };
   res.render("urlsIndex", templateVars); //renders the file urlsIndex
 });
@@ -97,7 +97,7 @@ app.post("/urls", (req, res) => { //changes are made on /url
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user: req.cookies["user_id"]
   };
   res.render("urls_new", templateVars);
 });
@@ -108,7 +108,7 @@ app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describ
   const templateVars = { //necessary info
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
+    user: req.cookies["user_id"]
   };
   res.render("urlsShow", templateVars); //render from urlsShow
 });
