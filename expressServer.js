@@ -48,8 +48,40 @@ app.get("/hello", (req, res) => {
 });
 //------------------------------------------------------------------------------------
 
+app.get('/login', (req, res) => {
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render('login', templateVars);
+});
+
+app.post('/login', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  if (!email || !password) {
+    return res.status(400).send('Email or Password Cannot be blank');
+  }
+  
+  const user = getUserByEmail(email);
+
+  if (!user) {
+    res.redirect('/register');
+    return;
+  }
+  if (password !== user.password) {
+    res.status(401).send('Incorrect Password');
+    return;
+  }
+
+
+  res.cookie('user_id',req.body.user);
+  res.redirect('/urls');
+
+});
+
+//------------------------------------------------------------------------------------
+
 app.get('/register', (req, res) => {
-  const templateVars = { user: req.cookies["user_id"] };
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render("accReg", templateVars);
 });
 
@@ -58,15 +90,18 @@ app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   
-  
-  if (getUserByEmail(email)) {
-    return res.status(404).send('User already exists');
+  if (!email || !password) {
+    return res.status(400).send('Email or Password Cannot be blank');
   }
   
-  users[id] = {id, email, password}; // not sure why this has to be down here
+  if (getUserByEmail(email)) {
+    return res.status(400).send('User already exists');
+  }
+  
+  users[id] = {id, email, password}; // only adds to object after its been shown to not exist
 
 
-  res.cookie('user_id', email);
+  res.cookie('user_id', id);
   res.redirect('/urls');
 
 });
@@ -79,7 +114,7 @@ app.post('/register', (req, res) => {
 app.get('/urls', (req, res) =>{ //accesses the page ending in /urls
   const templateVars = { //gives necessary values
     urls: urlDatabase,
-    user: req.cookies["user_id"]
+    user: users[req.cookies["user_id"]]
   };
   res.render("urlsIndex", templateVars); //renders the file urlsIndex
 });
@@ -97,7 +132,7 @@ app.post("/urls", (req, res) => { //changes are made on /url
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: req.cookies["user_id"]
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_new", templateVars);
 });
@@ -108,7 +143,7 @@ app.get("/urls/:shortURL", (req, res) => { //: is the parameter/variable describ
   const templateVars = { //necessary info
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    user: req.cookies["user_id"]
+    user: users[req.cookies["user_id"]]
   };
   res.render("urlsShow", templateVars); //render from urlsShow
 });
@@ -136,13 +171,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 //------------------------------------------------------------------------------------
 
-app.post('/login', (req, res) =>{
-  res.cookie('user_id',req.body.user);
-  res.redirect('/urls');
-}); //log in, save cookies, redirect
-
 app.post('/logout', (req, res) =>{
-  res.clearCookie('user_id', req.body.user);
+  res.clearCookie('user_id');
   res.redirect('/urls');
 }); //log out, delete cookies, redirect
 
