@@ -6,6 +6,8 @@ const cookies = require('cookie-session');
 const bodyParser = require("body-parser");
 const bcrypt = require('bcryptjs');
 
+const { getUserByEmail, getUsersURLs } = require('./helpers');
+
 
 const urlDatabase = {
   b6UTxQ: {
@@ -31,26 +33,7 @@ const users = {
   }
 };
 
-const getUserByEmail = function(email) {
-  for (let id in users) {
-    const user = users[id];
-    if (user.email === email) {
-      return user;
-    }
-  }
-};
-
-const getUsersURLs = function(userID) { //this is urlsForUser(id) but different function name
-  const userURLs = {};
-  for (const shortURL in urlDatabase) {
-    const url = urlDatabase[shortURL];
-    if (url.userID === userID) {
-      userURLs[shortURL] = url;
-    }
-  }
-  return userURLs;
-};
-
+//------------------------------------------------------------------------------------
 const checkUser = (email, password) => {
   for (let user in users) {
     if (email === users[user].email) {
@@ -103,7 +86,7 @@ app.post('/login', (req, res) => {
     return res.status(400).send('Email or Password Cannot be blank');
   }
 
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   if (!user) {
     res.redirect('/register');
@@ -147,7 +130,7 @@ app.post('/register', (req, res) => {
     return res.status(400).send('Email or Password Cannot be blank');
   }
   
-  if (getUserByEmail(email)) {
+  if (getUserByEmail(email, users)) {
     return res.status(400).send('User already exists');
   }
   
@@ -170,7 +153,7 @@ app.get('/urls', (req, res) =>{
   }
 
   const templateVars = {
-    urls: getUsersURLs(req.session.user_id),
+    urls: getUsersURLs(req.session.user_id, urlDatabase),
     user: users[req.session.user_id]
   };
 
