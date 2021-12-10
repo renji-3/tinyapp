@@ -46,7 +46,7 @@ const checkUser = (email, password) => {
   return null;
 };
 
-//-------------------------------CONSTANTS-----------------------------------------------------
+//-------------------------------EXTRA CONSTANTS-----------------------------------------------
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -58,10 +58,6 @@ app.use(
 );
 
 app.set("view engine", "ejs");
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -76,12 +72,12 @@ app.get("/hello", (req, res) => {
 app.get('/registersuccess', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
   res.render("regSucc", templateVars);
-});
+}); //successful registration redirect page (does this instead of a redirect to /urls)
 
 app.get('/register', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
   res.render("accReg", templateVars);
-});
+}); //register page
 
 app.post('/register', (req, res) => {
   const id = generateRandomString();
@@ -102,14 +98,14 @@ app.post('/register', (req, res) => {
   req.session.user_id = users.id;
   res.redirect('/registersuccess');
 
-});
+}); //registration commands, no blanks, user exists, add to object/'database', create cookie
 
 //---------------------------------LOGIN---------------------------------------------------
 
 app.get('/login', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
   res.render('login', templateVars);
-});
+}); //login page
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
@@ -134,9 +130,20 @@ app.post('/login', (req, res) => {
   req.session.user_id = user.id;
   res.redirect('/urls');
 
-});
+}); //login commands, if blank, if no user, if incorrect password
 
 //-------------------------------URLS/HOME PAGE------------------------------------------------
+
+app.get("/", (req, res) => {
+  const userID = req.session.user_id;
+  const loggedIn = users[userID];
+  
+  if (!loggedIn) {
+    res.redirect('/login');
+  }
+  
+  res.redirect("/urls");
+}); //brings to URLs page
 
 app.get('/urls', (req, res) =>{
 
@@ -150,14 +157,14 @@ app.get('/urls', (req, res) =>{
   const templateVars = {
     urls: getUsersURLs(req.session.user_id, urlDatabase),
     user: users[req.session.user_id]
-  };
+  }; //displays the URLs page
 
   
   res.render("urlsIndex", templateVars);
 });
 
 
-app.post("/urls", (req, res) => { //changes are made on /url
+app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   const longURL = req.body.longURL;
 
@@ -165,21 +172,21 @@ app.post("/urls", (req, res) => { //changes are made on /url
   const randomURL = generateRandomString();
   urlDatabase[randomURL] = {longURL, userID};
   res.redirect(`/urls/${randomURL}`);
-}); //creates new url
+}); //actually creates the new URL
 
-//-------------------------------NEW URL CREATION------------------------------------------------
+//-------------------------------NEW URL CREATION PAGE------------------------------------------------
 
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   const loggedIn = users[userId];
 
   if (!loggedIn) {
-    res.redirect('/loginerr');
+    res.redirect('/login');
   }
   
   const templateVars = { user: users[req.session.user_id] };
   res.render("urls_new", templateVars);
-});
+});//displays the new URL page
 
 //------------------------------ACCESSING URLS-------------------------------------------------
 
@@ -193,12 +200,12 @@ app.get("/urls/:shortURL", (req, res) => {
   const loggedIn = users[userId];
 
   if (!loggedIn) {
-    res.redirect('/loginerr');
+    res.redirect('/loginerr'); //if not logged in go to error page
   }
   res.render("urlsShow", templateVars);
-});
+}); //view shortened URL page
 
-app.post("/urls/:shortURL", (req, res) => {
+app.post("/urls/:shortURL", (req, res) => { 
   const shortURL = req.params.shortURL;
   const userID = req.session.user_id;
   const longURL = req.body.longURL;
@@ -206,7 +213,7 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = {longURL, userID};
 
   res.redirect(`/urls/${shortURL}`);
-}); //edit existing URL
+}); //edit existing short URL
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const userId = req.session.user_id;
@@ -219,7 +226,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect('/urls');
-});
+}); //deleting shortened URL
 
 //-----------------------------URL REDIRECT-------------------------------------------------------
 
@@ -229,7 +236,7 @@ app.get("/u/:shortURL", (req, res) => {
     return res.redirect('/urlerr');
   }
   res.redirect(shortURL.longURL);
-}); //link redirect to longURL
+}); //redirect to long URL
 
 //-------------------------------LOG OUT-----------------------------------------------------
 
@@ -243,12 +250,12 @@ app.post('/logout', (req, res) =>{
 app.get('/loginerr', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
   res.render('notLoggedIn', templateVars);
-});
+}); //login error page
 
 app.get('/urlerr', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
   res.render('URLNotReal', templateVars);
-});
+}); //url doesnt exist error page
 
 
 //------------------------------------------------------------------------------------
