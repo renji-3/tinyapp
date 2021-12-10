@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookies = require('cookie-parser');
 const bodyParser = require("body-parser");
+const bcrypt = require('bcryptjs');
+
 
 const urlDatabase = {
   b6UTxQ: {
@@ -19,12 +21,12 @@ const users = {
   "aJ48lW": {
     id: "aJ48lW",
     email: "user@example.com",
-    password: "asd"
+    password: bcrypt.hashSync('asd', 10)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync('qwe', 10)
   }
 };
 
@@ -46,6 +48,17 @@ const getUsersURLs = function(userID) { //this is urlsForUser(id) but different 
     }
   }
   return userURLs;
+};
+
+const checkUser = (email, password) => {
+  for (let user in users) {
+    if (email === users[user].email) {
+      if (bcrypt.compareSync(password, users[user].password)) {
+        return user;
+      }
+    }
+  }
+  return null;
 };
 
 //------------------------------------------------------------------------------------
@@ -76,18 +89,19 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = checkUser(email, password);
   
   if (!email || !password) {
     return res.status(400).send('Email or Password Cannot be blank');
   }
-  
+
   const user = getUserByEmail(email);
 
   if (!user) {
     res.redirect('/register');
     return;
   }
-  if (password !== user.password) {
+  if (!hashedPassword) {
     res.status(401).send('Incorrect Password');
     return;
   }
@@ -129,8 +143,7 @@ app.post('/register', (req, res) => {
     return res.status(400).send('User already exists');
   }
   
-  users[id] = {id, email, password}; // only adds to object after its been shown to not exist
-
+  users[id] = {id: id, email: email, password: bcrypt.hashSync(password, 10)}; // only adds to object after its been shown to not exist
 
   res.cookie('user_id', id);
   res.redirect('/urls');

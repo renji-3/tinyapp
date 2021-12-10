@@ -16,10 +16,10 @@
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
       </div>
     <div class="card-footer text-muted">
-      <h5 class="card-title"> Edit the URL</h5>
+      <h5 class="card-title"> Edit URL</h5>
       <form action="/urls/<%= shortURL %>" method="POST">
         <div class="form-group mb-2">
-        <label for="longURL"> Enter URL </label>
+        <label for="longURL"> Enter New URL </label>
           <input class="form-control" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: auto;">
           <button type="submit" class="btn btn-primary" style="margin: 10px">Submit</button>
         </div>
