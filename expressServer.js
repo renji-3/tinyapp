@@ -33,7 +33,8 @@ const users = {
   }
 };
 
-//------------------------------------------------------------------------------------
+//-----------------------------EXTRA HELPER FUNCTION------------------------------------
+
 const checkUser = (email, password) => {
   for (let user in users) {
     if (email === users[user].email) {
@@ -45,7 +46,7 @@ const checkUser = (email, password) => {
   return null;
 };
 
-//------------------------------------------------------------------------------------
+//-------------------------------CONSTANTS-----------------------------------------------------
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -70,7 +71,40 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//------------------------------------------------------------------------------------
+//-----------------------------REGISTRATION-----------------------------------------------------
+
+app.get('/registersuccess', (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render("regSucc", templateVars);
+});
+
+app.get('/register', (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render("accReg", templateVars);
+});
+
+app.post('/register', (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  
+  if (!email || !password) {
+    return res.status(400).send('Email or Password Cannot be blank');
+  }
+  
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send('User already exists');
+  }
+
+  users[id] = {id: id, email: email, password: bcrypt.hashSync(password, 10)};
+
+
+  req.session.user_id = users.id;
+  res.redirect('/registersuccess');
+
+});
+
+//---------------------------------LOGIN---------------------------------------------------
 
 app.get('/login', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
@@ -102,46 +136,7 @@ app.post('/login', (req, res) => {
 
 });
 
-//------------------------------------------------------------------------------------
-
-app.get('/loginerr', (req, res) => {
-  const templateVars = { user: users[req.session.user_id] };
-  res.render('notLoggedIn', templateVars);
-});
-
-app.get('/urlerr', (req, res) => {
-  const templateVars = { user: users[req.session.user_id] };
-  res.render('URLNotReal', templateVars);
-});
-
-//------------------------------------------------------------------------------------
-
-app.get('/register', (req, res) => {
-  const templateVars = { user: users[req.session.user_id] };
-  res.render("accReg", templateVars);
-});
-
-app.post('/register', (req, res) => {
-  const id = generateRandomString();
-  const email = req.body.email;
-  const password = req.body.password;
-  
-  if (!email || !password) {
-    return res.status(400).send('Email or Password Cannot be blank');
-  }
-  
-  if (getUserByEmail(email, users)) {
-    return res.status(400).send('User already exists');
-  }
-  
-  users[id] = {id: id, email: email, password: bcrypt.hashSync(password, 10)}; // only adds to object after its been shown to not exist
-
-  res.cookie('user_id', id);
-  res.redirect('/urls');
-
-});
-
-//------------------------------------------------------------------------------------
+//-------------------------------URLS/HOME PAGE------------------------------------------------
 
 app.get('/urls', (req, res) =>{
 
@@ -172,7 +167,7 @@ app.post("/urls", (req, res) => { //changes are made on /url
   res.redirect(`/urls/${randomURL}`);
 }); //creates new url
 
-//------------------------------------------------------------------------------------
+//-------------------------------NEW URL CREATION------------------------------------------------
 
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
@@ -186,7 +181,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-//------------------------------------------------------------------------------------
+//------------------------------ACCESSING URLS-------------------------------------------------
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
@@ -226,7 +221,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-//------------------------------------------------------------------------------------
+//-----------------------------URL REDIRECT-------------------------------------------------------
 
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = urlDatabase[req.params.shortURL];
@@ -236,12 +231,25 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(shortURL.longURL);
 }); //link redirect to longURL
 
-//------------------------------------------------------------------------------------
+//-------------------------------LOG OUT-----------------------------------------------------
 
 app.post('/logout', (req, res) =>{
   req.session = null;
   res.redirect('/urls');
 }); //log out, delete cookies, redirect
+
+//------------------------------ERROR REDIRECTS---------------------------------------------------
+
+app.get('/loginerr', (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render('notLoggedIn', templateVars);
+});
+
+app.get('/urlerr', (req, res) => {
+  const templateVars = { user: users[req.session.user_id] };
+  res.render('URLNotReal', templateVars);
+});
+
 
 //------------------------------------------------------------------------------------
 
