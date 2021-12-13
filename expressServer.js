@@ -1,36 +1,35 @@
-const express = require("express");
+const express = require('express');
 const app = express();
 const PORT = 8080;
 // const cookies = require('cookie-parser');
 const cookies = require('cookie-session');
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 
 const { getUserByEmail, getUsersURLs } = require('./helpers');
 
-
 const urlDatabase = {
   b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW"
+    longURL: 'https://www.tsn.ca',
+    userID: 'aJ48lW',
   },
   i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW"
-  }
+    longURL: 'https://www.google.ca',
+    userID: 'aJ48lW',
+  },
 };
 
 const users = {
-  "aJ48lW": {
-    id: "aJ48lW",
-    email: "user@example.com",
-    password: bcrypt.hashSync('asd', 10)
+  aJ48lW: {
+    id: 'aJ48lW',
+    email: 'user@example.com',
+    password: bcrypt.hashSync('asd', 10),
   },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: bcrypt.hashSync('qwe', 10)
-  }
+  user2RandomID: {
+    id: 'user2RandomID',
+    email: 'user2@example.com',
+    password: bcrypt.hashSync('qwe', 10),
+  },
 };
 
 //-----------------------------EXTRA HELPER FUNCTION------------------------------------
@@ -48,56 +47,54 @@ const checkUser = (email, password) => {
 
 //-------------------------------EXTRA CONSTANTS-----------------------------------------------
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(
   cookies({
-    name: "session",
-    keys: ["I like potatoes, cheese and gravy", "key"],
+    name: 'session',
+    keys: ['I like potatoes, cheese and gravy', 'key'],
   })
 );
 
-app.set("view engine", "ejs");
+app.set('view engine', 'ejs');
 
-app.get("/urls.json", (req, res) => {
+app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get('/hello', (req, res) => {
+  res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
 
 //-----------------------------REGISTRATION-----------------------------------------------------
 
 app.get('/registersuccess', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
-  res.render("regSucc", templateVars);
+  res.render('regSucc', templateVars);
 }); //successful registration redirect page (does this instead of a redirect to /urls)
 
 app.get('/register', (req, res) => {
   const templateVars = { user: users[req.session.user_id] };
-  res.render("accReg", templateVars);
+  res.render('accReg', templateVars);
 }); //register page
 
 app.post('/register', (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  
+
   if (!email || !password) {
     return res.status(400).send('Email or Password Cannot be blank');
   }
-  
+
   if (getUserByEmail(email, users)) {
     return res.status(400).send('User already exists');
   }
 
-  users[id] = {id: id, email: email, password: bcrypt.hashSync(password, 10)};
-
+  users[id] = { id: id, email: email, password: bcrypt.hashSync(password, 10) };
 
   req.session.user_id = users.id;
   res.redirect('/registersuccess');
-
 }); //registration commands, no blanks, user exists, add to object/'database', create cookie
 
 //---------------------------------LOGIN---------------------------------------------------
@@ -111,7 +108,7 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = checkUser(email, password);
-  
+
   if (!email || !password) {
     return res.status(400).send('Email or Password Cannot be blank');
   }
@@ -129,72 +126,67 @@ app.post('/login', (req, res) => {
 
   req.session.user_id = user.id;
   res.redirect('/urls');
-
 }); //login commands, if blank, if no user, if incorrect password
 
 //-------------------------------URLS/HOME PAGE------------------------------------------------
 
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   const userID = req.session.user_id;
   const loggedIn = users[userID];
-  
+
   if (!loggedIn) {
     res.redirect('/login');
   }
-  
-  res.redirect("/urls");
+
+  res.redirect('/urls');
 }); //brings to URLs page
 
-app.get('/urls', (req, res) =>{
-
+app.get('/urls', (req, res) => {
   const userID = req.session.user_id;
   const loggedIn = users[userID];
-  
+
   if (!loggedIn) {
     res.redirect('/loginerr');
   }
 
   const templateVars = {
     urls: getUsersURLs(req.session.user_id, urlDatabase),
-    user: users[req.session.user_id]
+    user: users[req.session.user_id],
   }; //displays the URLs page
 
-  
-  res.render("urlsIndex", templateVars);
+  res.render('urlsIndex', templateVars);
 });
 
-
-app.post("/urls", (req, res) => {
+app.post('/urls', (req, res) => {
   const userID = req.session.user_id;
   const longURL = req.body.longURL;
 
-
   const randomURL = generateRandomString();
-  urlDatabase[randomURL] = {longURL, userID};
+  urlDatabase[randomURL] = { longURL, userID };
   res.redirect(`/urls/${randomURL}`);
 }); //actually creates the new URL
 
 //-------------------------------NEW URL CREATION PAGE------------------------------------------------
 
-app.get("/urls/new", (req, res) => {
+app.get('/urls/new', (req, res) => {
   const userId = req.session.user_id;
   const loggedIn = users[userId];
 
   if (!loggedIn) {
     res.redirect('/login');
   }
-  
+
   const templateVars = { user: users[req.session.user_id] };
-  res.render("urls_new", templateVars);
-});//displays the new URL page
+  res.render('urls_new', templateVars);
+}); //displays the new URL page
 
 //------------------------------ACCESSING URLS-------------------------------------------------
 
-app.get("/urls/:shortURL", (req, res) => {
+app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.session.user_id]
+    user: users[req.session.user_id],
   };
   const userId = req.session.user_id;
   const loggedIn = users[userId];
@@ -202,15 +194,20 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!loggedIn) {
     res.redirect('/loginerr'); //if not logged in go to error page
   }
-  res.render("urlsShow", templateVars);
+  
+  if (urlDatabase[templateVars.shortURL].userID !== templateVars.user.id) {
+    res.send(`Error: Whose mans is this bro??? You don't own the URL BUCKTEE, BACKOFF!`);
+  }
+
+  res.render('urlsShow', templateVars);
 }); //view shortened URL page
 
-app.post("/urls/:shortURL", (req, res) => { 
+app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
   const userID = req.session.user_id;
   const longURL = req.body.longURL;
 
-  urlDatabase[shortURL] = {longURL, userID};
+  urlDatabase[shortURL] = { longURL, userID };
 
   res.redirect(`/urls/${shortURL}`);
 }); //edit existing short URL
@@ -230,7 +227,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 //-----------------------------URL REDIRECT-------------------------------------------------------
 
-app.get("/u/:shortURL", (req, res) => {
+app.get('/u/:shortURL', (req, res) => {
   const shortURL = urlDatabase[req.params.shortURL];
   if (!shortURL) {
     return res.redirect('/urlerr');
@@ -240,7 +237,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 //-------------------------------LOG OUT-----------------------------------------------------
 
-app.post('/logout', (req, res) =>{
+app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 }); //log out, delete cookies, redirect
@@ -257,13 +254,11 @@ app.get('/urlerr', (req, res) => {
   res.render('URLNotReal', templateVars);
 }); //url doesnt exist error page
 
-
 //------------------------------------------------------------------------------------
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-const generateRandomString = (length = 6) => Math.random().toString(20).substr(2, length);
-
-
+const generateRandomString = (length = 6) =>
+  Math.random().toString(20).substr(2, length);
